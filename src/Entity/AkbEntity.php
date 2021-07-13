@@ -17,6 +17,11 @@ class AkbEntity extends AbstractEntity
     private ?AkbCategory $category = null;
 
     /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\AkbBrand")
+     */
+    protected ?AkbBrand $brand = null;
+
+    /**
      * @ORM\Column(type="string")
      */
     private string $title;
@@ -50,6 +55,11 @@ class AkbEntity extends AbstractEntity
      * @ORM\Column(type="string", nullable=true)
      */
     private ?string $imageUrlPath = null;
+
+    /**
+     * @ORM\Column(type="string", nullable=true)
+     */
+    protected ?string $link = null;
 
     public function __toString(): string
     {
@@ -197,5 +207,41 @@ class AkbEntity extends AbstractEntity
     public function setImageUrlPath(?string $imageUrlPath): void
     {
         $this->imageUrlPath = $imageUrlPath;
+    }
+
+    /**
+     * @return AkbBrand|null
+     */
+    public function getBrand(): ?AkbBrand
+    {
+        return $this->brand;
+    }
+
+    /**
+     * @param AkbBrand|null $brand
+     * @return AkbEntity
+     */
+    public function setBrand(?AkbBrand $brand): AkbEntity
+    {
+        $this->brand = $brand;
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getLink(): ?string
+    {
+        return $this->link;
+    }
+
+    /**
+     * @param string|null $link
+     * @return AkbEntity
+     */
+    public function setLink(?string $link): AkbEntity
+    {
+        $this->link = $link;
+        return $this;
     }
 }

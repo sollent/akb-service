@@ -2,6 +2,7 @@
 
 namespace App\Command;
 
+use App\Entity\AkbBrand;
 use App\Entity\AkbCategory;
 use App\Entity\AkbEntity;
 use Doctrine\ORM\EntityManagerInterface;
@@ -20,7 +21,8 @@ class AkbParseCommand extends Command
 {
     public const DOMAIN = 'https://xn----7sbdfotj5che.xn--90ais';
 
-    public const BASE_URL = 'https://xn----7sbdfotj5che.xn--90ais/%D0%90%D0%BA%D0%BA%D1%83%D0%BC%D1%83%D0%BB%D1%8F%D1%82%D0%BE%D1%80%D1%8B/%D0%9A%D0%BE%D0%BC%D0%BC%D0%B5%D1%80%D1%87%D0%B5%D1%81%D0%BA%D0%B8%D0%B9-%D0%B0%D0%B2%D1%82%D0%BE%D1%82%D1%80%D0%B0%D0%BD%D1%81%D0%BF%D0%BE%D1%80%D1%82';
+//    public const BASE_URL = 'https://xn----7sbdfotj5che.xn--90ais/%D0%90%D0%BA%D0%BA%D1%83%D0%BC%D1%83%D0%BB%D1%8F%D1%82%D0%BE%D1%80%D1%8B/%D0%9A%D0%BE%D0%BC%D0%BC%D0%B5%D1%80%D1%87%D0%B5%D1%81%D0%BA%D0%B8%D0%B9-%D0%B0%D0%B2%D1%82%D0%BE%D1%82%D1%80%D0%B0%D0%BD%D1%81%D0%BF%D0%BE%D1%80%D1%82';
+    public const BASE_URL = 'https://xn----7sbdfotj5che.xn--90ais/%D0%90%D0%BA%D0%BA%D1%83%D0%BC%D1%83%D0%BB%D1%8F%D1%82%D0%BE%D1%80%D1%8B/%D0%9C%D0%BE%D1%82%D0%BE%D1%82%D0%B5%D1%85%D0%BD%D0%B8%D0%BA%D0%B0';
 
     public const BASE_MEDIA_URI = '/uploads/products/thumbnails/large/';
 
@@ -39,7 +41,7 @@ class AkbParseCommand extends Command
     private SerializerInterface $serializer;
 
     /**
-     * AkbCategoryParseCommand constructor.
+     * AkbParseCommand constructor.
      *
      * @param EntityManagerInterface $entityManager
      * @param SerializerInterface $serializer
@@ -57,16 +59,18 @@ class AkbParseCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        $currentCategory = $this->entityManager->getRepository(AkbCategory::class)->find(3);
+
         // Simple parser realization
         $client = new Client();
         $response = $client->get(self::BASE_URL);
 
         $crawler = new Crawler($response->getBody()->getContents());
 
-        $productsArray = $crawler->filter('ul.product-list li article a')->each(function (Crawler $crawler) {
-            $categoryString = $crawler->filter('h2.product-name span.product-brand')->text() ?? null;
-            $existCategory = $this->entityManager->getRepository(AkbCategory::class)->findOneBy([
-                'title' => $categoryString
+        $productsArray = $crawler->filter('ul.product-list li article a')->each(function (Crawler $crawler) use ($currentCategory) {
+            $brandString = $crawler->filter('h2.product-name span.product-brand')->text() ?? null;
+            $existBrand = $this->entityManager->getRepository(AkbBrand::class)->findOneBy([
+                'title' => $brandString
             ]);
 
             $title = $crawler->filter('h2.product-name')->text();
@@ -88,13 +92,18 @@ class AkbParseCommand extends Command
             $discountPrice = intval($explodedPrices[0]);
             $price = intval($explodedPrices[1]);
 
+            $link = $crawler->attr('href');
+            $link = \sprintf('%s%s', self::DOMAIN, $link);
+
             return [
-                'category' => $existCategory,
+                'category' => $currentCategory,
+                'brand' => $existBrand,
                 'title' => $title,
                 'shortDescription' => $this->buildShortDescription($characteristicKeys, $characteristicValues),
                 'imageUrlPath' => $imagePath,
                 'discountPrice' => $discountPrice,
-                'price' => $price
+                'price' => $price,
+                'link' => $link
             ];
         });
 
@@ -103,6 +112,8 @@ class AkbParseCommand extends Command
             $akbEntity
                 ->setTitle($productItem['title'])
                 ->setCategory($productItem['category'] ?? null)
+                ->setBrand($productItem['brand'] ?? null)
+                ->setLink($productItem['link'])
                 ->setShortDescription($productItem['shortDescription'] ?? null)
                 ->setDiscountPrice($productItem['discountPrice'] ?? null)
                 ->setPrice($productItem['price'])

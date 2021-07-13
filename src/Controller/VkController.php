@@ -87,7 +87,7 @@ class VkController extends AbstractController
         $albumId = 2;
 
         /** @var AkbEntity[] $products */
-        $products = $this->getDoctrine()->getRepository(AkbEntity::class)->findBy([], [], 2);
+        $products = $this->getDoctrine()->getRepository(AkbEntity::class)->findAll();
 
         foreach ($products as $product) {
             // upload product photo
@@ -112,15 +112,17 @@ class VkController extends AbstractController
                 'owner_id' => self::AKB_GROUP_ID_NEGATIVE,
                 'name' => $product->getTitle(),
                 'description' => \sprintf(
-                    "%s\n\nПроизводитель: %s\n\nПри обмене цена - %s BYN",
+                    "%s\nКатегория: %s\nПроизводитель: %s\n\nПри обмене цена - %s BYN",
                     $product->getShortDescription(),
                     $product->getCategory()->getTitle(),
+                    $product->getBrand()->getTitle(),
                     $product->getDiscountPrice()
                 ),
                 'category_id' => $categoryID,
                 'price' => $product->getDiscountPrice(),
                 'old_price' => $product->getPrice(),
-                'main_photo_id' => $photoID
+                'main_photo_id' => $photoID,
+                'url' => $product->getLink()
             ]);
 
             $itemID = $response['market_item_id'];
@@ -131,9 +133,10 @@ class VkController extends AbstractController
                 'album_ids' => [$albumId]
             ]);
 
-            dump($response);
+            sleep(1);
         }
 
+        dump('success');
         exit();
     }
 
