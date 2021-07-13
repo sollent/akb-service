@@ -1,3 +1,12 @@
-#index:
-#    path: /
-#    controller: App\Controller\DefaultController::index
+index:
+    path: /vk
+    controller: App\Controller\VkController::index
+get_code:
+    path: /get-code
+    controller: App\Controller\VkController::getCode
+get_token:
+    path: /get-token
+    controller: App\Controller\VkController::getToken
+post:
+    path: /post
+    controller: App\Controller\VkController::post
